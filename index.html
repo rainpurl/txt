@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>txt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Roboto+Slab:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
+<style>
+:root, [data-theme="light"] {
+  --bg: #efebe0;
+  --fg: #1f1f1e;
+  --menu-bg: #f6f2e7;
+  --menu-border: rgba(31,31,30,.08);
+  --hover: rgba(31,31,30,.06);
+  --shadow: 0 1px 2px rgba(31,31,30,.02), 0 8px 24px rgba(31,31,30,.03);
+  --overlay: rgba(31,31,30,.18);
+}
+[data-theme="warm"] {
+  --bg: #e8dcc4;
+  --fg: #6b3a2a;
+  --menu-bg: #efe4cf;
+  --menu-border: rgba(107,58,42,.1);
+  --hover: rgba(107,58,42,.06);
+  --shadow: 0 1px 2px rgba(107,58,42,.03), 0 8px 24px rgba(107,58,42,.04);
+  --overlay: rgba(107,58,42,.18);
+}
+[data-theme="dark"] {
+  --bg: #1f1f1e;
+  --fg: #efebe0;
+  --menu-bg: #2a2a28;
+  --menu-border: rgba(239,235,224,.08);
+  --hover: rgba(239,235,224,.07);
+  --shadow: 0 1px 2px rgba(0,0,0,.1), 0 8px 24px rgba(0,0,0,.15);
+  --overlay: rgba(0,0,0,.45);
+}
+[data-theme="amoled"] {
+  --bg: #000000;
+  --fg: #ffffff;
+  --menu-bg: #0a0a0a;
+  --menu-border: rgba(255,255,255,.1);
+  --hover: rgba(255,255,255,.06);
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.4);
+  --overlay: rgba(0,0,0,.6);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Roboto Mono', ui-monospace, monospace;
+  font-size: 16px;
+  line-height: 1.6;
+  overflow: hidden;
+  transition: background 200ms, color 200ms;
+}
+
+.menus {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  user-select: none;
+}
+.menu {
+  display: flex;
+  align-items: center;
+  background: var(--menu-bg);
+  border: 1px solid var(--menu-border);
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: var(--shadow);
+  gap: 2px;
+  backdrop-filter: blur(6px);
+}
+.btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font: inherit;
+  transition: background 100ms, color 100ms, transform 100ms;
+}
+.btn:hover { background: var(--hover); }
+.btn:active { transform: scale(0.94); }
+.btn.active {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* every text glyph sits in a fixed 20x20 centered box so the optical
+   center is the same regardless of font metrics or decoration */
+.glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 13px;
+  line-height: 1;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* font preview buttons show "f" in their own face, normalized so optical size matches */
+.btn[data-font="serif"] .glyph { font-family: 'Georgia Pro', Georgia, serif; font-size: 17px; }
+.btn[data-font="sans"]  .glyph { font-family: 'Roboto', sans-serif; font-size: 17px; }
+.btn[data-font="slab"]  .glyph { font-family: 'Roboto Slab', serif; font-size: 17px; }
+.btn[data-font="mono"]  .glyph { font-family: 'Roboto Mono', monospace; font-size: 15px; }
+
+/* format buttons - same size as fonts */
+.btn[data-cmd="bold"]      .glyph { font-weight: 700; font-size: 14px; }
+.btn[data-cmd="italic"]    .glyph { font-style: italic; font-size: 14px; }
+.btn[data-cmd="underline"] .glyph { text-decoration: underline; text-underline-offset: 2px; font-size: 14px; }
+
+/* special chars button */
+.btn[data-action="chars"] .glyph { font-size: 15px; }
+
+/* SVG icons sit in the same visual box */
+.btn[data-action="theme"] svg { width: 16px; height: 16px; display: block; }
+
+#editor {
+  position: absolute;
+  inset: 0;
+  padding: 96px max(24px, calc(50% - 380px)) 96px;
+  outline: none;
+  overflow-y: auto;
+  font-family: var(--editor-font, 'Roboto Mono', monospace);
+  font-size: 16px;
+  line-height: 1.7;
+  caret-color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+#editor::-webkit-scrollbar { width: 10px; }
+#editor::-webkit-scrollbar-thumb {
+  background: var(--menu-border);
+  border-radius: 10px;
+  border: 2px solid var(--bg);
+}
+
+body[data-font="serif"] { --editor-font: 'Georgia Pro', Georgia, serif; }
+body[data-font="sans"]  { --editor-font: 'Roboto', system-ui, sans-serif; }
+body[data-font="slab"]  { --editor-font: 'Roboto Slab', Georgia, serif; }
+body[data-font="mono"]  { --editor-font: 'Roboto Mono', ui-monospace, monospace; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  z-index: 50;
+  backdrop-filter: blur(2px);
+}
+.overlay.open { display: flex; }
+.panel {
+  width: min(560px, 92vw);
+  max-height: 70vh;
+  background: var(--menu-bg);
+  border: 1px solid var(--menu-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel input {
+  border: none;
+  border-bottom: 1px solid var(--menu-border);
+  background: transparent;
+  color: var(--fg);
+  padding: 16px 20px;
+  font: inherit;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+}
+.panel input::placeholder { color: var(--fg); opacity: 0.45; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 2px;
+  padding: 8px;
+  overflow-y: auto;
+}
+.cell {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 22px;
+  line-height: 1;
+  padding: 12px 4px;
+  cursor: pointer;
+  color: var(--fg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transition: background 80ms;
+  font-family: 'Roboto', sans-serif;
+}
+.cell:hover, .cell.kbd { background: var(--hover); }
+.cell small {
+  font-size: 9px;
+  opacity: 0.55;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  font-family: 'Roboto Mono', monospace;
+}
+.empty {
+  padding: 32px;
+  opacity: 0.5;
+  font-size: 13px;
+  text-align: center;
+  font-family: 'Roboto Mono', monospace;
+}
+.status {
+  position: fixed;
+  bottom: 26px;
+  right: 76px;
+  font-size: 10px;
+  opacity: 0.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: 'Roboto Mono', monospace;
+  pointer-events: none;
+}
+.word-count {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  opacity: 0.32;
+  letter-spacing: 0.04em;
+  font-family: var(--editor-font, 'Roboto Mono', monospace);
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.menus-bottom {
+  top: auto;
+  bottom: 16px;
+  left: auto;
+  right: 16px;
+  transform: none;
+}
+.btn[data-action="cloud"] svg { width: 18px; height: 18px; display: block; }
+
+/* cloud panel */
+.cloud-panel { width: min(540px, 92vw); }
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--menu-border);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.link-btn {
+  background: transparent;
+  border: 1px solid var(--menu-border);
+  color: var(--fg);
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+  text-transform: none;
+}
+.link-btn:hover { background: var(--hover); opacity: 1; }
+.auth-error {
+  padding: 8px 20px;
+  font-size: 12px;
+  color: #c0392b;
+  font-family: 'Roboto Mono', monospace;
+  min-height: 16px;
+}
+[data-theme="dark"] .auth-error,
+[data-theme="amoled"] .auth-error { color: #ff7a6a; }
+
+.docs-list {
+  overflow-y: auto;
+  max-height: 60vh;
+  padding: 4px 0;
+}
+.docs-empty {
+  padding: 48px 20px;
+  text-align: center;
+  opacity: 0.4;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+}
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 10px 20px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--menu-border);
+  transition: background 80ms;
+}
+.doc-row:last-child { border-bottom: none; }
+.doc-row:hover { background: var(--hover); }
+.doc-row.current {
+  background: var(--hover);
+}
+.doc-row.current::before {
+  content: '\2022';
+  margin-left: -10px;
+  margin-right: 4px;
+  opacity: 0.6;
+}
+.doc-title-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.doc-title {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Roboto Mono', monospace;
+}
+.doc-title.untitled { opacity: 0.45; font-style: italic; }
+.doc-date {
+  font-size: 10px;
+  opacity: 0.45;
+  letter-spacing: 0.04em;
+  font-family: 'Roboto Mono', monospace;
+}
+.doc-actions { display: flex; gap: 2px; }
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0.5;
+  transition: background 80ms, opacity 80ms;
+}
+.icon-btn:hover { background: var(--menu-border); opacity: 1; }
+.icon-btn svg { width: 14px; height: 14px; display: block; }
+</style>
+</head>
+<body data-font="mono">
+
+<div class="menus">
+  <div class="menu" id="font-menu">
+    <button class="btn" data-font="serif" title="Serif"><span class="glyph">f</span></button>
+    <button class="btn" data-font="sans" title="Sans"><span class="glyph">f</span></button>
+    <button class="btn" data-font="slab" title="Slab"><span class="glyph">f</span></button>
+    <button class="btn" data-font="mono" title="Mono"><span class="glyph">f</span></button>
+  </div>
+  <div class="menu" id="format-menu">
+    <button class="btn" data-cmd="bold" title="Bold (&#x2318;B)"><span class="glyph">B</span></button>
+    <button class="btn" data-cmd="italic" title="Italic (&#x2318;I)"><span class="glyph">I</span></button>
+    <button class="btn" data-cmd="underline" title="Underline (&#x2318;U)"><span class="glyph">U</span></button>
+  </div>
+  <div class="menu" id="chars-menu">
+    <button class="btn" data-action="chars" id="open-chars" title="Special characters (&#x2318;K)"><span class="glyph">&#x03A9;</span></button>
+  </div>
+  <div class="menu" id="theme-menu">
+    <button class="btn" data-action="theme" id="toggle-theme" title="Cycle theme: light &rarr; warm &rarr; dark &rarr; amoled">
+      <svg id="icon-light" class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="8"/>
+      </svg>
+      <svg id="icon-warm" class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <circle cx="12" cy="12" r="8"/>
+        <path d="M12 4 A 8 8 0 0 1 12 20 A 5 8 0 0 0 12 4 Z" fill="currentColor" stroke="none"/>
+      </svg>
+      <svg id="icon-dark" class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <circle cx="12" cy="12" r="8"/>
+        <path d="M12 4 A 8 8 0 0 1 12 20 Z" fill="currentColor" stroke="none"/>
+      </svg>
+      <svg id="icon-amoled" class="theme-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <circle cx="12" cy="12" r="8"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<div id="editor" contenteditable="true" spellcheck="true"></div>
+
+<div class="word-count" id="word-count"></div>
+<div class="status" id="status"></div>
+
+<div class="menus menus-bottom">
+  <div class="menu">
+    <button class="btn" data-action="cloud" id="open-cloud" title="Saved documents">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17.5 19a4.5 4.5 0 1 0 -1.5 -8.74A6 6 0 0 0 4.2 12.3 A 4 4 0 0 0 6 19h11.5z"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<div class="overlay" id="cloud-overlay">
+  <div class="panel cloud-panel">
+    <div id="auth-view">
+      <div class="panel-header"><span>passphrase</span></div>
+      <input id="auth-input" type="password" placeholder="enter passphrase" autocomplete="off">
+      <div class="auth-error" id="auth-error"></div>
+    </div>
+    <div id="docs-view" style="display:none">
+      <div class="panel-header">
+        <span>saved docs</span>
+        <button class="link-btn" id="new-doc">+ new</button>
+      </div>
+      <div class="docs-list" id="docs-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="panel">
+    <input id="char-search" type="text" placeholder="search: arrow, em dash, alpha, heart..." autocomplete="off">
+    <div class="grid" id="char-grid"></div>
+  </div>
+</div>
+
+<script>
+const CHARS = [
+  { c: '\u2014', n: 'em dash', k: 'dash em long' },
+  { c: '\u2013', n: 'en dash', k: 'dash en' },
+  { c: '\u2212', n: 'minus', k: 'minus subtract math' },
+  { c: '\u00AD', n: 'soft hyphen', k: 'hyphen soft break invisible' },
+  { c: '\u00A0', n: 'nbsp', k: 'non breaking space nbsp invisible' },
+  { c: '\u2009', n: 'thin space', k: 'space thin invisible' },
+  { c: '\u2003', n: 'em space', k: 'space em invisible' },
+  { c: '\u201C', n: 'left double', k: 'quote curly left double' },
+  { c: '\u201D', n: 'right double', k: 'quote curly right double' },
+  { c: '\u2018', n: 'left single', k: 'quote curly left single apostrophe' },
+  { c: '\u2019', n: 'right single', k: 'quote curly right single apostrophe' },
+  { c: '\u00AB', n: 'guillemet left', k: 'quote french left' },
+  { c: '\u00BB', n: 'guillemet right', k: 'quote french right' },
+  { c: '\u201E', n: 'low double', k: 'quote german low double' },
+  { c: '\u201A', n: 'low single', k: 'quote german low single' },
+  { c: '\u2039', n: 'single left', k: 'quote french single left' },
+  { c: '\u203A', n: 'single right', k: 'quote french single right' },
+  { c: '\u2026', n: 'ellipsis', k: 'ellipsis dots three' },
+  { c: '\u00B7', n: 'middle dot', k: 'dot middle interpunct' },
+  { c: '\u2022', n: 'bullet', k: 'bullet dot list' },
+  { c: '\u25E6', n: 'open bullet', k: 'bullet open' },
+  { c: '\u00B6', n: 'pilcrow', k: 'paragraph pilcrow' },
+  { c: '\u00A7', n: 'section', k: 'section sign' },
+  { c: '\u2020', n: 'dagger', k: 'dagger note' },
+  { c: '\u2021', n: 'double dagger', k: 'dagger double' },
+  { c: '\u00A1', n: 'inv exclaim', k: 'exclaim inverted spanish' },
+  { c: '\u00BF', n: 'inv question', k: 'question inverted spanish' },
+  { c: '\u203D', n: 'interrobang', k: 'interrobang question exclaim' },
+  { c: '\u00B0', n: 'degree', k: 'degree temperature' },
+  { c: '\u2032', n: 'prime', k: 'prime feet minute' },
+  { c: '\u2033', n: 'double prime', k: 'prime inch second double' },
+  { c: '\u00A9', n: 'copyright', k: 'copyright' },
+  { c: '\u00AE', n: 'registered', k: 'registered trademark' },
+  { c: '\u2122', n: 'trademark', k: 'trademark' },
+  { c: '\u2120', n: 'service mark', k: 'service mark sm' },
+  { c: '\u2116', n: 'numero', k: 'number numero' },
+  { c: '\u2605', n: 'star filled', k: 'star filled' },
+  { c: '\u2606', n: 'star outline', k: 'star outline empty' },
+  { c: '\u2665', n: 'heart', k: 'heart love' },
+  { c: '\u2661', n: 'heart outline', k: 'heart outline' },
+  { c: '\u2666', n: 'diamond', k: 'diamond suit' },
+  { c: '\u2713', n: 'check', k: 'check tick yes' },
+  { c: '\u2717', n: 'cross', k: 'cross x no' },
+  { c: '\u2726', n: 'four star', k: 'star four point' },
+  { c: '\u273A', n: 'sparkle', k: 'sparkle star' },
+  { c: '\u2192', n: 'right arrow', k: 'arrow right' },
+  { c: '\u2190', n: 'left arrow', k: 'arrow left' },
+  { c: '\u2191', n: 'up arrow', k: 'arrow up' },
+  { c: '\u2193', n: 'down arrow', k: 'arrow down' },
+  { c: '\u2194', n: 'left right', k: 'arrow horizontal both' },
+  { c: '\u2195', n: 'up down', k: 'arrow vertical both' },
+  { c: '\u2197', n: 'ne arrow', k: 'arrow northeast' },
+  { c: '\u2198', n: 'se arrow', k: 'arrow southeast' },
+  { c: '\u2199', n: 'sw arrow', k: 'arrow southwest' },
+  { c: '\u2196', n: 'nw arrow', k: 'arrow northwest' },
+  { c: '\u21D2', n: 'double right', k: 'arrow double right implies' },
+  { c: '\u21D0', n: 'double left', k: 'arrow double left' },
+  { c: '\u21D4', n: 'double both', k: 'arrow double both iff' },
+  { c: '\u21A9', n: 'return', k: 'arrow return enter' },
+  { c: '\u2934', n: 'curve up', k: 'arrow curve up' },
+  { c: '\u2935', n: 'curve down', k: 'arrow curve down' },
+  { c: '\u00D7', n: 'multiply', k: 'multiply times math' },
+  { c: '\u00F7', n: 'divide', k: 'divide division math' },
+  { c: '\u00B1', n: 'plus minus', k: 'plus minus' },
+  { c: '\u2213', n: 'minus plus', k: 'minus plus' },
+  { c: '\u2248', n: 'approx', k: 'approximately approx' },
+  { c: '\u2260', n: 'not equal', k: 'not equal' },
+  { c: '\u2261', n: 'identical', k: 'identical equiv' },
+  { c: '\u2264', n: 'less equal', k: 'less than or equal' },
+  { c: '\u2265', n: 'greater equal', k: 'greater than or equal' },
+  { c: '\u221E', n: 'infinity', k: 'infinity infinite' },
+  { c: '\u221A', n: 'sqrt', k: 'square root sqrt' },
+  { c: '\u2211', n: 'sum', k: 'sum sigma' },
+  { c: '\u220F', n: 'product', k: 'product pi' },
+  { c: '\u222B', n: 'integral', k: 'integral' },
+  { c: '\u2202', n: 'partial', k: 'partial derivative' },
+  { c: '\u2207', n: 'nabla', k: 'nabla del gradient' },
+  { c: '\u2208', n: 'element of', k: 'element of in' },
+  { c: '\u2209', n: 'not element', k: 'not element of' },
+  { c: '\u2205', n: 'empty set', k: 'empty set null' },
+  { c: '\u2229', n: 'intersection', k: 'intersection and' },
+  { c: '\u222A', n: 'union', k: 'union or' },
+  { c: '\u2282', n: 'subset', k: 'subset' },
+  { c: '\u2283', n: 'superset', k: 'superset' },
+  { c: '\u2234', n: 'therefore', k: 'therefore' },
+  { c: '\u2235', n: 'because', k: 'because' },
+  { c: '\u2220', n: 'angle', k: 'angle' },
+  { c: '\u22A5', n: 'perpendicular', k: 'perpendicular' },
+  { c: '\u2225', n: 'parallel', k: 'parallel' },
+  { c: '\u00BD', n: 'one half', k: 'fraction half' },
+  { c: '\u2153', n: 'one third', k: 'fraction third' },
+  { c: '\u2154', n: 'two thirds', k: 'fraction two thirds' },
+  { c: '\u00BC', n: 'one quarter', k: 'fraction quarter' },
+  { c: '\u00BE', n: 'three quarters', k: 'fraction three quarters' },
+  { c: '\u2155', n: 'one fifth', k: 'fraction fifth' },
+  { c: '\u215B', n: 'one eighth', k: 'fraction eighth' },
+  { c: '\u20AC', n: 'euro', k: 'euro eur' },
+  { c: '\u00A3', n: 'pound', k: 'pound gbp' },
+  { c: '\u00A5', n: 'yen', k: 'yen yuan jpy cny' },
+  { c: '\u00A2', n: 'cent', k: 'cent' },
+  { c: '\u20B9', n: 'rupee', k: 'rupee inr indian' },
+  { c: '\u20A9', n: 'won', k: 'won krw korean' },
+  { c: '\u20BF', n: 'bitcoin', k: 'bitcoin btc crypto' },
+  { c: '\u03B1', n: 'alpha', k: 'greek alpha' },
+  { c: '\u03B2', n: 'beta', k: 'greek beta' },
+  { c: '\u03B3', n: 'gamma', k: 'greek gamma' },
+  { c: '\u03B4', n: 'delta', k: 'greek delta' },
+  { c: '\u03B5', n: 'epsilon', k: 'greek epsilon' },
+  { c: '\u03B8', n: 'theta', k: 'greek theta' },
+  { c: '\u03BB', n: 'lambda', k: 'greek lambda' },
+  { c: '\u03BC', n: 'mu', k: 'greek mu micro' },
+  { c: '\u03C0', n: 'pi', k: 'greek pi' },
+  { c: '\u03C3', n: 'sigma', k: 'greek sigma' },
+  { c: '\u03C4', n: 'tau', k: 'greek tau' },
+  { c: '\u03C6', n: 'phi', k: 'greek phi' },
+  { c: '\u03C9', n: 'omega', k: 'greek omega' },
+  { c: '\u0394', n: 'cap delta', k: 'greek capital delta change' },
+  { c: '\u03A3', n: 'cap sigma', k: 'greek capital sigma sum' },
+  { c: '\u03A9', n: 'cap omega', k: 'greek capital omega ohm' },
+  { c: '\u00E1', n: 'a acute', k: 'a accent acute' },
+  { c: '\u00E9', n: 'e acute', k: 'e accent acute' },
+  { c: '\u00ED', n: 'i acute', k: 'i accent acute' },
+  { c: '\u00F3', n: 'o acute', k: 'o accent acute' },
+  { c: '\u00FA', n: 'u acute', k: 'u accent acute' },
+  { c: '\u00F1', n: 'n tilde', k: 'n tilde spanish' },
+  { c: '\u00FC', n: 'u umlaut', k: 'u umlaut diaeresis' },
+  { c: '\u00F6', n: 'o umlaut', k: 'o umlaut diaeresis' },
+  { c: '\u00E4', n: 'a umlaut', k: 'a umlaut diaeresis' },
+  { c: '\u00E7', n: 'c cedilla', k: 'c cedilla' },
+  { c: '\u00DF', n: 'eszett', k: 'german eszett sharp s' },
+  { c: '\u00E6', n: 'ae', k: 'ae ligature' },
+  { c: '\u0153', n: 'oe', k: 'oe ligature' },
+  { c: '\u00F8', n: 'o slash', k: 'o slash scandinavian' },
+  { c: '\u00E5', n: 'a ring', k: 'a ring angstrom' },
+  { c: '\u25A0', n: 'square', k: 'square filled' },
+  { c: '\u25A1', n: 'square outline', k: 'square outline' },
+  { c: '\u25AA', n: 'small square', k: 'square small' },
+  { c: '\u25CF', n: 'circle', k: 'circle filled' },
+  { c: '\u25CB', n: 'circle outline', k: 'circle outline' },
+  { c: '\u25C6', n: 'diamond shape', k: 'diamond shape' },
+  { c: '\u25C7', n: 'diamond outline', k: 'diamond outline' },
+  { c: '\u25B2', n: 'triangle up', k: 'triangle up' },
+  { c: '\u25BC', n: 'triangle down', k: 'triangle down' },
+  { c: '\u25BA', n: 'play', k: 'play triangle right' },
+  { c: '\u25C0', n: 'rewind', k: 'play triangle left' },
+  { c: '\u2318', n: 'command', k: 'command mac cmd' },
+  { c: '\u2325', n: 'option', k: 'option alt mac' },
+  { c: '\u21E7', n: 'shift', k: 'shift mac' },
+  { c: '\u2303', n: 'control', k: 'control ctrl mac' },
+  { c: '\u23CE', n: 'return key', k: 'return enter key' },
+  { c: '\u2423', n: 'space symbol', k: 'space bar key' },
+  { c: '\u232B', n: 'delete', k: 'delete backspace' },
+  { c: '\u238B', n: 'escape', k: 'escape esc' },
+];
+
+const editor = document.getElementById('editor');
+const status = document.getElementById('status');
+const overlay = document.getElementById('overlay');
+const charSearch = document.getElementById('char-search');
+const charGrid = document.getElementById('char-grid');
+
+const THEMES = ['light', 'warm', 'dark', 'amoled'];
+function setTheme(t) {
+  if (!THEMES.includes(t)) t = 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  THEMES.forEach(n => {
+    const el = document.getElementById('icon-' + n);
+    if (el) el.style.display = n === t ? 'block' : 'none';
+  });
+  localStorage.setItem('txt:theme', t);
+}
+document.getElementById('toggle-theme').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  const i = THEMES.indexOf(cur);
+  setTheme(THEMES[(i + 1) % THEMES.length]);
+});
+
+const fontButtons = document.querySelectorAll('#font-menu .btn');
+function setFont(f) {
+  document.body.dataset.font = f;
+  fontButtons.forEach(b => b.classList.toggle('active', b.dataset.font === f));
+  localStorage.setItem('txt:font', f);
+}
+fontButtons.forEach(b => b.addEventListener('click', () => setFont(b.dataset.font)));
+
+function exec(cmd) {
+  editor.focus();
+  document.execCommand(cmd, false, null);
+  updateActiveStates();
+  save();
+}
+document.querySelectorAll('#format-menu .btn').forEach(b => {
+  b.addEventListener('mousedown', e => e.preventDefault());
+  b.addEventListener('click', () => exec(b.dataset.cmd));
+});
+function updateActiveStates() {
+  ['bold','italic','underline'].forEach(cmd => {
+    const btn = document.querySelector(`[data-cmd="${cmd}"]`);
+    btn.classList.toggle('active', document.queryCommandState(cmd));
+  });
+}
+document.addEventListener('selectionchange', updateActiveStates);
+
+let savedRange = null;
+function openChars() {
+  overlay.classList.add('open');
+  charSearch.value = '';
+  renderChars('');
+  setTimeout(() => charSearch.focus(), 0);
+}
+function closeChars() { overlay.classList.remove('open'); }
+function renderChars(q) {
+  q = q.trim().toLowerCase();
+  const matches = q
+    ? CHARS.filter(c =>
+        c.n.toLowerCase().includes(q) ||
+        c.k.toLowerCase().includes(q) ||
+        c.c === q)
+    : CHARS;
+  if (!matches.length) {
+    charGrid.innerHTML = '<div class="empty">nothing matches</div>';
+    return;
+  }
+  charGrid.innerHTML = matches.map((c, i) => {
+    const display = c.k.includes('invisible')
+      ? `<span style="opacity:.4;font-style:italic;font-size:11px">${c.n.split(' ')[0]}</span>`
+      : `<span>${c.c}</span>`;
+    return `<button class="cell${i === 0 ? ' kbd' : ''}" data-i="${CHARS.indexOf(c)}" title="${c.n}">${display}<small>${c.n}</small></button>`;
+  }).join('');
+}
+function insertChar(ch) {
+  editor.focus();
+  if (savedRange) {
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+  }
+  document.execCommand('insertText', false, ch);
+  save();
+}
+document.getElementById('open-chars').addEventListener('mousedown', () => {
+  const sel = window.getSelection();
+  if (sel.rangeCount) savedRange = sel.getRangeAt(0).cloneRange();
+});
+document.getElementById('open-chars').addEventListener('click', openChars);
+charSearch.addEventListener('input', () => renderChars(charSearch.value));
+charGrid.addEventListener('click', e => {
+  const btn = e.target.closest('.cell');
+  if (!btn) return;
+  const ch = CHARS[+btn.dataset.i].c;
+  closeChars();
+  insertChar(ch);
+});
+overlay.addEventListener('click', e => { if (e.target === overlay) closeChars(); });
+charSearch.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeChars(); return; }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const first = charGrid.querySelector('.cell.kbd') || charGrid.querySelector('.cell');
+    if (first) { closeChars(); insertChar(CHARS[+first.dataset.i].c); }
+  }
+});
+
+// ---------------- persistence + cloud ----------------
+const KEY = 'txt:content';
+const DOCID_KEY = 'txt:docId';
+const AUTH_KEY = 'txt:auth';
+
+let currentDocId = localStorage.getItem(DOCID_KEY) || null;
+function ensureDocId() {
+  if (!currentDocId) {
+    currentDocId = 'd-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem(DOCID_KEY, currentDocId);
+  }
+  return currentDocId;
+}
+function setCurrentDocId(id) {
+  currentDocId = id;
+  if (id) localStorage.setItem(DOCID_KEY, id);
+  else localStorage.removeItem(DOCID_KEY);
+  renderDocsList(); // refresh current marker
+}
+
+const getAuth   = () => localStorage.getItem(AUTH_KEY);
+const setAuthPw = (pw) => localStorage.setItem(AUTH_KEY, pw);
+const clearAuth = () => localStorage.removeItem(AUTH_KEY);
+
+async function api(path, opts = {}) {
+  const auth = getAuth();
+  if (!auth) throw new Error('no-auth');
+  const res = await fetch(path, {
+    ...opts,
+    headers: {
+      'Authorization': 'Bearer ' + auth,
+      'Content-Type': 'application/json',
+      ...(opts.headers || {}),
+    },
+  });
+  if (res.status === 401) { clearAuth(); throw new Error('unauthorized'); }
+  if (!res.ok && res.status !== 204) throw new Error('http-' + res.status);
+  return res;
+}
+
+let cloudSaveTimer;
+function save() {
+  const content = editor.innerHTML;
+  localStorage.setItem(KEY, content);
+  ensureDocId();
+  flashStatus('saved');
+  if (getAuth()) {
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(cloudSave, 1500);
+  }
+}
+async function cloudSave() {
+  if (!currentDocId) return;
+  if (!getAuth()) { flashStatus('not signed in'); return; }
+  try {
+    const res = await fetch('/api/docs/' + encodeURIComponent(currentDocId), {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + getAuth(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content: editor.innerHTML }),
+    });
+    if (!res.ok) {
+      const ct = res.headers.get('content-type') || '';
+      const detail = ct.includes('json') ? JSON.stringify(await res.json().catch(() => null)) : await res.text().catch(() => '');
+      flashStatus('cloud ' + res.status + (detail ? ' ' + detail.slice(0, 60) : ''));
+      console.error('cloud save failed', res.status, detail);
+    } else {
+      flashStatus('synced');
+    }
+  } catch (e) {
+    flashStatus('cloud offline');
+    console.error('cloud save error', e);
+  }
+}
+
+function load() {
+  editor.innerHTML = localStorage.getItem(KEY) || '';
+  setFont(localStorage.getItem('txt:font') || 'mono');
+  setTheme(localStorage.getItem('txt:theme') || 'light');
+}
+
+let statusTimer;
+function flashStatus(text) {
+  status.textContent = text || 'saved';
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(() => status.textContent = '', 1200);
+}
+
+const wordCountEl = document.getElementById('word-count');
+function updateCounts() {
+  const text = editor.innerText || '';
+  const trimmed = text.trim();
+  const words = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+  const chars = text.length;
+  wordCountEl.textContent = words.toLocaleString() + ' words   ' + chars.toLocaleString() + ' characters';
+}
+
+editor.addEventListener('input', save);
+editor.addEventListener('input', updateCounts);
+editor.addEventListener('paste', () => setTimeout(() => { save(); updateCounts(); }, 10));
+
+// best-effort final save when page closes
+window.addEventListener('pagehide', () => {
+  const content = editor.innerHTML;
+  localStorage.setItem(KEY, content);
+  const auth = getAuth();
+  if (auth && currentDocId && content) {
+    const body = JSON.stringify({ id: currentDocId, content, _auth: auth });
+    try {
+      navigator.sendBeacon('/api/beacon', new Blob([body], { type: 'application/json' }));
+    } catch (e) {}
+  }
+});
+
+// ---------------- cloud UI ----------------
+const cloudOverlay = document.getElementById('cloud-overlay');
+const authView    = document.getElementById('auth-view');
+const docsView    = document.getElementById('docs-view');
+const authInput   = document.getElementById('auth-input');
+const authError   = document.getElementById('auth-error');
+const docsList    = document.getElementById('docs-list');
+
+function openCloud() {
+  cloudOverlay.classList.add('open');
+  authError.textContent = '';
+  if (getAuth()) {
+    authView.style.display = 'none';
+    docsView.style.display = 'block';
+    loadDocsList();
+  } else {
+    authView.style.display = 'block';
+    docsView.style.display = 'none';
+    authInput.value = '';
+    setTimeout(() => authInput.focus(), 0);
+  }
+}
+function closeCloud() { cloudOverlay.classList.remove('open'); }
+
+document.getElementById('open-cloud').addEventListener('click', openCloud);
+cloudOverlay.addEventListener('click', e => { if (e.target === cloudOverlay) closeCloud(); });
+
+authInput.addEventListener('keydown', async e => {
+  if (e.key === 'Escape') { closeCloud(); return; }
+  if (e.key !== 'Enter') return;
+  const pw = authInput.value;
+  if (!pw) return;
+  authError.textContent = 'checking...';
+  setAuthPw(pw);
+  try {
+    const res = await fetch('/api/docs', { headers: { 'Authorization': 'Bearer ' + pw } });
+    if (res.status === 401) {
+      clearAuth();
+      authError.textContent = 'wrong passphrase';
+      return;
+    }
+    if (!res.ok) {
+      clearAuth();
+      authError.textContent = 'server error ' + res.status;
+      return;
+    }
+    authError.textContent = '';
+    authView.style.display = 'none';
+    docsView.style.display = 'block';
+    const docs = await res.json();
+    renderDocsList(docs);
+  } catch (err) {
+    clearAuth();
+    authError.textContent = 'connection failed';
+  }
+});
+
+let _docs = [];
+async function loadDocsList() {
+  docsList.innerHTML = '<div class="docs-empty">loading...</div>';
+  try {
+    const res = await api('/api/docs');
+    _docs = await res.json();
+    renderDocsList();
+  } catch (e) {
+    if (e.message === 'unauthorized') {
+      openCloud();
+    } else {
+      docsList.innerHTML = '<div class="docs-empty">could not load</div>';
+    }
+  }
+}
+
+function fmtDate(ms) {
+  if (!ms) return '';
+  const d = new Date(ms);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if (sameDay) return time;
+  const date = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return date + ' ' + time;
+}
+
+function renderDocsList(docs) {
+  if (docs) _docs = docs;
+  if (!_docs || _docs.length === 0) {
+    docsList.innerHTML = '<div class="docs-empty">no saved docs yet</div>';
+    return;
+  }
+  docsList.innerHTML = _docs.map(d => {
+    const title = d.title && d.title.trim() ? escapeHtml(d.title) : '<span class="doc-title untitled">untitled</span>';
+    const titleClass = d.title && d.title.trim() ? 'doc-title' : '';
+    const cur = d.id === currentDocId ? ' current' : '';
+    return `<div class="doc-row${cur}" data-id="${d.id}">
+      <div class="doc-title-wrap">
+        <div class="${titleClass}">${title}</div>
+        <div class="doc-date">${fmtDate(d.updatedAt)}</div>
+      </div>
+      <div class="doc-actions">
+        <button class="icon-btn" data-act="download" title="Download .txt">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        <button class="icon-btn" data-act="delete" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function htmlToText(html) {
+  return (html || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(div|p|li|h[1-6])>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)));
+}
+
+docsList.addEventListener('click', async e => {
+  const actionBtn = e.target.closest('.icon-btn');
+  const row = e.target.closest('.doc-row');
+  if (!row) return;
+  const id = row.dataset.id;
+
+  if (actionBtn) {
+    e.stopPropagation();
+    const act = actionBtn.dataset.act;
+    if (act === 'download') {
+      try {
+        const res = await api('/api/docs/' + encodeURIComponent(id));
+        const doc = await res.json();
+        const text = htmlToText(doc.content);
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const name = (doc.title || 'untitled').replace(/[^a-z0-9-_ ]/gi, '_').slice(0, 40) || 'untitled';
+        a.download = name + '.txt';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (err) { flashStatus('error'); }
+    } else if (act === 'delete') {
+      if (!confirm('delete this doc?')) return;
+      try {
+        await api('/api/docs/' + encodeURIComponent(id), { method: 'DELETE' });
+        _docs = _docs.filter(d => d.id !== id);
+        if (currentDocId === id) {
+          editor.innerHTML = '';
+          localStorage.removeItem(KEY);
+          setCurrentDocId(null);
+        }
+        renderDocsList();
+      } catch (err) { flashStatus('error'); }
+    }
+    return;
+  }
+
+  // row click = open
+  try {
+    const res = await api('/api/docs/' + encodeURIComponent(id));
+    const doc = await res.json();
+    editor.innerHTML = doc.content || '';
+    localStorage.setItem(KEY, editor.innerHTML);
+    setCurrentDocId(doc.id);
+    closeCloud();
+    updateCounts();
+    editor.focus();
+  } catch (err) { flashStatus('error'); }
+});
+
+document.getElementById('new-doc').addEventListener('click', () => {
+  editor.innerHTML = '';
+  localStorage.removeItem(KEY);
+  setCurrentDocId(null);
+  ensureDocId();
+  closeCloud();
+  updateCounts();
+  editor.focus();
+});
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    openChars();
+  }
+  if (e.key === 'Escape' && cloudOverlay.classList.contains('open')) {
+    closeCloud();
+  }
+});
+
+load();
+ensureDocId();
+updateCounts();
+editor.focus();
+
+</script>
+</body>
+</html>
